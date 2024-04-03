@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Simple React App</title>
+  <!-- React -->
+  <script src="https://unpkg.com/react@17/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
+  <!-- Babel -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useRef, useState, useEffect } = React;
+
+    function App() {
+      const videoRef = useRef(null);
+      const canvasRef = useRef(null);
+      const [email, setEmail] = useState('');
+      const [image, setImage] = useState(null);
+      const [captured, setCaptured] = useState(false);
+
+      useEffect(() => {
+        async function enableStream() {
+          try {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            videoRef.current.srcObject = stream;
+          } catch (err) {
+            console.error('Error accessing the camera', err);
+          }
+        }
+
+        enableStream();
+      }, []);
+
+      const captureImage = () => {
+        const canvas = canvasRef.current;
+        const video = videoRef.current;
+        
+        // Set a fixed size for the captured image
+        const width = 320;
+        const height = 240;
+        canvas.width = width;
+        canvas.height = height;
+        
+        // Draw the video frame to the canvas.
+        canvas.getContext('2d').drawImage(video, 0, 0, video.videoWidth, video.videoHeight, 0, 0, width, height);
+        canvas.toBlob(blob => setImage(blob));
+        setCaptured(true);
+      };
+
+      const retakeImage = () => {
+        setCaptured(false);
+        setImage(null);
+      };
+
+      const handleSubmit = async (e) => {
+        e.preventDefault();
+
+        if (!image || !email) {
+          alert('Please capture an image and enter an email');
+          return;
+        }
+
+        const formData = new FormData();
+        formData.append('email', email);
+        formData.append('image', image);
+
+        try {
+          const response = await fetch('http://192.168.1.207:4000/register', {
+            method: 'POST',
+            body: formData,
+          });
+          const result = await response.json();
+          console.log(result);
+          alert('Submitted successfully');
+        } catch (err) {
+          console.error('Submission error', err);
+          alert('Error submitting the form');
+        }
+      };
+
+      return (
+        <div>
+          <video ref={videoRef} autoPlay style={{ width: '320px', height: '240px', display: captured ? 'none' : 'block' }}></video>
+          <canvas ref={canvasRef} style={{ width: '320px', height: '240px', display: captured ? 'block' : 'none' }}></canvas>
+          <form onSubmit={handleSubmit}>
+            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Enter your email" required />
+            {!captured && <button type="button" onClick={captureImage}>Capture Image</button>}
+            {captured && <button type="button" onClick={retakeImage}>Retake Image</button>}
+            <button type="submit">Submit</button>
+          </form>
+        </div>
+      );
+    }
+
+    ReactDOM.render(<App />, document.getElementById('root'));
+  </script>
+</body>
+</html>
