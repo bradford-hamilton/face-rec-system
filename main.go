@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"os"
 
+	"github.mlbam.net/blamson/face-rec-system/internal/server"
 	"github.mlbam.net/blamson/face-rec-system/internal/storage"
-	"github.mlbam.net/blamson/face-rec-system/internal/storage/server"
 
 	// postgres driver
 	_ "github.com/lib/pq"
