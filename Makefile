@@ -10,4 +10,4 @@ run:
 	go run main.go
 
 move:
-	scp -r internal .gitignore dev.env entry_scanning.py find_match_in_gallery.py generate_biometric_id.py go.mod go.sum main.go Makefile save_embeddings.py schema.sql web-view.html ubuntu@192.168.1.207:/home/ubuntu/workspace/face-rec-system
+	scp -r internal .gitignore dev.env entry_scanning.py find_match_in_gallery.py generate_biometric_id.py go.mod go.sum main.go Makefile save_embeddings.py web-view.html ubuntu@192.168.1.207:/home/ubuntu/workspace/face-rec-system

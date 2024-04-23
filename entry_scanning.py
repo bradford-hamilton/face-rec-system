@@ -4,14 +4,23 @@ import time
 import signal
 from threading import Timer
 
-capture_interval = 5 # seconds
-match_handler_url = "http://localhost:4000/match"
+class Color:
+    RED = '\033[31m'
+    GREEN = '\033[32m'
+    BLUE = '\033[34m'
+    RESET = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
 
-# Initialize the camera
-cap = cv2.VideoCapture(0)
+def pretty_print(text, color=Color.RESET, bold=False):
+    style = color + (Color.BOLD if bold else '')
+    print(style + text + color)
 
-# Flag to control the capture loop
-keep_running = True
+def signal_handler(signum, frame):
+    global keep_running
+    print("Termination signal received, shutting down...")
+    keep_running = False
+    cap.release()
 
 def capture_and_send():
     if not keep_running:
@@ -30,17 +39,28 @@ def capture_and_send():
     files = {'image': ('image.jpeg', buffer.tobytes(), 'image/jpeg')}
     response = requests.post(match_handler_url, files=files)
 
-    print("Image sent, response:", response.text)
+    if response.status_code == 200:
+        data = response.json()
+        pretty_print(f"Match found! User ID: {data['user_id']}, Email: {data['email']}", Color.GREEN, True)
+    elif response.status_code == 404:
+        pretty_print("No matches found")
+    else:
+        print("An error occurred", Color.RED, False)
 
     # Schedule the next capture if we are still running
     if keep_running:
         Timer(capture_interval, capture_and_send).start()
 
-def signal_handler(signum, frame):
-    global keep_running
-    print("Termination signal received, shutting down...")
-    keep_running = False
-    cap.release() # Release camera resource
+# ------------------------ main ------------------------
+
+capture_interval = 5 # seconds
+match_handler_url = "http://localhost:4000/match"
+
+# Initialize the camera
+cap = cv2.VideoCapture(0)
+
+# Flag to control the capture loop
+keep_running = True
 
 # Register signal handlers
 signal.signal(signal.SIGINT, signal_handler)

@@ -18,6 +18,11 @@ type registerResp struct {
 	BiometricID []float64 `json:"biometric_id"`
 }
 
+type matchResp struct {
+	UserID int    `json:"user_id"`
+	Email  string `json:"email"`
+}
+
 func (a *API) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseMultipartForm(tenMB); err != nil {
 		fmt.Println("err: ", err)
@@ -195,5 +200,20 @@ func (a *API) MatchHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Fprintf(w, "Match found: User ID: %d, Email: %s", user.UserID, user.Email)
+	resp := matchResp{
+		UserID: user.UserID,
+		Email:  user.Email,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+
+	respBytes, err := json.Marshal(resp)
+	if err != nil {
+		fmt.Println("err:", err)
+		http.Error(w, "Error marshalling json", http.StatusInternalServerError)
+		return
+	}
+
+	w.Write(respBytes)
 }
